@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>A Mystery For You</title>
+<style>
+/* ============================================================
+   FONTS
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,500&family=Marcellus&family=Poppins:wght@300;400;500;600&display=swap');
+
+/* ============================================================
+   CSS VARIABLES — THEME (edit these to re-theme the whole site)
+   ============================================================ */
+:root{
+  --c-black:#0a0b0a;
+  --c-dark:#12140f;
+  --c-olive:#2c3122;
+  --c-emerald:#0f3d33;
+  --c-emerald-bright:#1f8f6f;
+  --c-gold:#d8b96a;
+  --c-gold-soft:#e8d8ab;
+  --c-white:#f5f3ec;
+  --glass:rgba(255,255,255,0.05);
+  --glass-border:rgba(216,185,106,0.25);
+  --font-display:'Cormorant Garamond', serif;
+  --font-title:'Marcellus', serif;
+  --font-body:'Poppins', sans-serif;
+}
+
+*{box-sizing:border-box; margin:0; padding:0;}
+html,body{
+  height:100%;
+  background:var(--c-black);
+  color:var(--c-white);
+  font-family:var(--font-body);
+  overflow-x:hidden;
+  -webkit-tap-highlight-color:transparent;
+  scroll-behavior:smooth;
+}
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important;}
+}
+
+#app{
+  position:relative;
+  width:100%;
+  max-width:430px;
+  margin:0 auto;
+  min-height:100vh;
+  overflow:hidden;
+  background:radial-gradient(ellipse at top, var(--c-olive) 0%, var(--c-black) 70%);
+}
+
+/* ============================================================
+   GLOBAL PARTICLES / STARS
+   ============================================================ */
+#stars-canvas{
+  position:fixed; top:0; left:0; width:100%; height:100%;
+  max-width:430px; margin:0 auto; pointer-events:none; z-index:1;
+}
+.mouse-glow{
+  position:fixed; width:150px; height:150px; border-radius:50%;
+  background:radial-gradient(circle, rgba(216,185,106,0.10) 0%, transparent 70%);
+  pointer-events:none; z-index:2; transform:translate(-50%,-50%);
+  transition:opacity .3s;
+}
+
+/* ============================================================
+   SCREENS
+   ============================================================ */
+.screen{
+  position:absolute; inset:0; width:100%; min-height:100vh;
+  display:none; flex-direction:column; align-items:center; justify-content:center;
+  padding:32px 24px; z-index:5; opacity:0;
+}
+.screen.active{ display:flex; animation:fadeIn .9s ease forwards;}
+@keyframes fadeIn{ from{opacity:0; filter:blur(6px);} to{opacity:1; filter:blur(0);} }
+@keyframes fadeOut{ from{opacity:1;} to{opacity:0; filter:blur(6px);} }
+
+/* ============================================================
+   TOP BAR (nav) — hidden on opening screen
+   ============================================================ */
+#topbar{
+  position:fixed; top:0; left:50%; transform:translateX(-50%);
+  width:100%; max-width:430px; z-index:50;
+  display:none; align-items:center; justify-content:space-between;
+  padding:14px 16px; gap:10px;
+}
+#topbar.show{ display:flex; }
+.progress-wrap{
+  position:absolute; top:0; left:0; width:100%; height:3px; background:rgba(255,255,255,0.06);
+}
+.progress-bar{
+  height:100%; width:0%; background:linear-gradient(90deg,var(--c-emerald-bright),var(--c-gold));
+  transition:width .6s ease;
+}
+.nav-btn{
+  background:var(--glass); border:1px solid var(--glass-border); backdrop-filter:blur(8px);
+  color:var(--c-gold-soft); font-family:var(--font-body); font-size:12px; letter-spacing:.5px;
+  padding:8px 12px; border-radius:20px; cursor:pointer; transition:.25s;
+}
+.nav-btn:active{ transform:scale(.93); background:rgba(216,185,106,0.15); }
+#musicBtn{ font-size:16px; padding:8px 10px; }
+
+/* ============================================================
+   GLASS CARD
+   ============================================================ */
+.glass{
+  background:var(--glass);
+  border:1px solid var(--glass-border);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  border-radius:18px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.35);
+}
+
+/* ============================================================
+   OPENING SCREEN
+   ============================================================ */
+#screen-opening{ z-index:100; }
+.clock-digital{
+  font-family:var(--font-title); font-size:2.6rem; color:var(--c-gold-soft);
+  text-shadow:0 0 18px rgba(216,185,106,0.4); letter-spacing:2px;
+}
+.date-today{ font-size:.8rem; letter-spacing:3px; opacity:.6; text-transform:uppercase; margin-top:6px;}
+.open-btn{
+  margin-top:48px; width:150px; height:150px; border-radius:50%;
+  background:radial-gradient(circle at 30% 30%, var(--c-emerald-bright), var(--c-emerald) 70%);
+  border:1px solid var(--c-gold); color:var(--c-white); font-family:var(--font-title);
+  font-size:1.15rem; letter-spacing:3px; cursor:pointer;
+  box-shadow:0 0 40px rgba(31,143,111,0.45), inset 0 0 20px rgba(0,0,0,.3);
+  animation:pulseGlow 2.6s ease-in-out infinite;
+}
+@keyframes pulseGlow{
+  0%,100%{ box-shadow:0 0 30px rgba(31,143,111,0.35), inset 0 0 20px rgba(0,0,0,.3);}
+  50%{ box-shadow:0 0 55px rgba(216,185,106,0.5), inset 0 0 20px rgba(0,0,0,.3);}
+}
+.open-btn:active{ transform:scale(.95); }
+
+/* ============================================================
+   LOADING SCREEN
+   ============================================================ */
+#screen-loading{ z-index:99; }
+.loading-text{ font-family:var(--font-display); font-style:italic; font-size:1.1rem; color:var(--c-gold-soft); margin-bottom:24px; min-height:1.4em;}
+.load-bar-wrap{ width:220px; height:2px; background:rgba(255,255,255,0.08); border-radius:2px; overflow:hidden;}
+.load-bar{ height:100%; width:0%; background:linear-gradient(90deg,var(--c-gold),var(--c-emerald-bright)); }
+
+/* ============================================================
+   WELCOME / HALAMAN 1
+   ============================================================ */
+.typing-block{ text-align:center; min-height:120px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;}
+.typing-line{ font-family:var(--font-title); font-size:1.7rem; color:var(--c-white); }
+.title-gold{
+  font-family:var(--font-title); font-size:2.3rem;
+  background:linear-gradient(90deg,var(--c-gold-soft),var(--c-gold),var(--c-emerald-bright));
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  text-shadow:0 0 30px rgba(216,185,106,0.25);
+}
+.subtext-italic{ font-family:var(--font-display); font-style:italic; font-size:1rem; opacity:.75; }
+.cta-btn{
+  margin-top:36px; padding:14px 38px; border-radius:30px; border:1px solid var(--c-gold);
+  background:transparent; color:var(--c-gold-soft); font-family:var(--font-body); font-size:.9rem;
+  letter-spacing:2px; text-transform:uppercase; cursor:pointer; position:relative; overflow:hidden;
+}
+.cta-btn:active{ transform:scale(.96); }
+.ripple{
+  position:absolute; border-radius:50%; background:rgba(216,185,106,0.35);
+  transform:scale(0); animation:rippleAnim .6s linear; pointer-events:none;
+}
+@keyframes rippleAnim{ to{ transform:scale(4); opacity:0; } }
+
+/* ============================================================
+   DOORS SCREEN
+   ============================================================ */
+.doors-title{ font-family:var(--font-title); font-size:1.5rem; color:var(--c-gold-soft); text-align:center; margin-bottom:24px;}
+.doors-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; width:100%; }
+.door{
+  aspect-ratio:1/1.15; border-radius:16px 16px 60px 60px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
+  cursor:pointer; transition:transform .3s; position:relative;
+}
+.door:active{ transform:scale(.95); }
+.door-icon{ width:38px; height:38px; }
+.door-label{ font-family:var(--font-display); font-size:.85rem; color:var(--c-gold-soft); text-align:center; padding:0 6px;}
+.door.opening{ animation:doorOpen .7s forwards; }
+@keyframes doorOpen{
+  0%{ transform:scale(1); filter:brightness(1);}
+  50%{ transform:scale(1.06); filter:brightness(1.6);}
+  100%{ transform:scale(0.3); opacity:0; filter:brightness(2);}
+}
+
+/* ============================================================
+   SUB-PAGE HEADER
+   ============================================================ */
+.subpage{ width:100%; padding-top:56px; padding-bottom:24px; min-height:100vh; display:flex; flex-direction:column; align-items:center; }
+.subpage-title{ font-family:var(--font-title); font-size:1.5rem; color:var(--c-gold-soft); margin-bottom:6px; text-align:center;}
+.subpage-sub{ font-family:var(--font-display); font-style:italic; font-size:.85rem; opacity:.6; margin-bottom:20px; text-align:center;}
+
+/* ============================================================
+   DOOR 1 — GALLERY
+   ============================================================ */
+.board{
+  width:100%; background:repeating-linear-gradient(45deg,#1a1c14,#1a1c14 10px,#181a12 10px,#181a12 20px);
+  border-radius:14px; padding:16px; display:grid; grid-template-columns:1fr 1fr; gap:14px;
+}
+.polaroid{
+  background:#f2efe6; padding:8px 8px 22px 8px; border-radius:3px; box-shadow:0 6px 14px rgba(0,0,0,.5);
+  cursor:pointer; transition:transform .25s; position:relative;
+}
+.polaroid:nth-child(odd){ transform:rotate(-4deg); }
+.polaroid:nth-child(even){ transform:rotate(3deg); }
+.polaroid:active{ transform:scale(.93) rotate(0deg); }
+.polaroid img{ width:100%; aspect-ratio:1/1; object-fit:cover; display:block; background:#333;}
+.polaroid-cap{ color:#333; font-family:var(--font-display); font-size:.7rem; text-align:center; margin-top:6px;}
+.gallery-full{
+  position:fixed; inset:0; max-width:430px; margin:0 auto; background:var(--c-black);
+  z-index:200; display:none; flex-direction:column; padding:20px; overflow-y:auto;
+}
+.gallery-full.show{ display:flex; animation:fadeIn .5s ease; }
+.gallery-full img{ width:100%; border-radius:12px; margin-bottom:16px; }
+.gallery-full h3{ font-family:var(--font-title); color:var(--c-gold-soft); font-size:1.2rem; }
+.gallery-full .meta{ font-size:.75rem; opacity:.6; margin:6px 0 14px; }
+.gallery-full .story{ font-family:var(--font-display); font-size:1rem; line-height:1.7; opacity:.9; }
+.back-btn{
+  align-self:flex-start; margin-bottom:14px; background:var(--glass); border:1px solid var(--glass-border);
+  color:var(--c-gold-soft); padding:8px 16px; border-radius:20px; font-size:.8rem; cursor:pointer;
+}
+
+/* ============================================================
+   DOOR 2 — VOICE MESSAGE
+   ============================================================ */
+.cassette{
+  width:220px; height:140px; border-radius:10px; margin:20px auto;
+  background:linear-gradient(145deg,#2b2d22,#14150f);
+  border:1px solid var(--c-gold); position:relative; box-shadow:0 10px 30px rgba(0,0,0,.5);
+  display:flex; align-items:center; justify-content:space-around; padding:0 20px;
+}
+.reel{
+  width:50px; height:50px; border-radius:50%; background:radial-gradient(circle,#0a0a0a 30%,#3a3d2d 32%,#3a3d2d 60%,#0a0a0a 62%);
+  border:2px solid var(--c-gold-soft);
+}
+.reel.spin{ animation:spin 2s linear infinite; }
+@keyframes spin{ to{ transform:rotate(360deg);} }
+.play-btn{
+  width:76px; height:76px; border-radius:50%; margin:20px auto; display:flex; align-items:center; justify-content:center;
+  background:radial-gradient(circle at 30% 30%,var(--c-gold-soft),var(--c-gold) 70%); border:none; cursor:pointer;
+  box-shadow:0 0 25px rgba(216,185,106,.4);
+}
+.waveform{ display:flex; align-items:flex-end; gap:3px; height:50px; justify-content:center; margin-top:10px;}
+.wave-bar{ width:4px; background:var(--c-emerald-bright); border-radius:2px; height:8px; transition:height .15s; }
+
+/* ============================================================
+   DOOR 3 — SECRET LETTER
+   ============================================================ */
+.pin-vault{ display:flex; flex-direction:column; align-items:center; gap:18px; margin-top:40px; }
+.pin-input{
+  width:200px; text-align:center; font-size:1.4rem; letter-spacing:8px; background:var(--glass);
+  border:1px solid var(--c-gold); border-radius:12px; color:var(--c-gold-soft); padding:14px 0; font-family:var(--font-title);
+}
+.pin-input:focus{ outline:none; box-shadow:0 0 15px rgba(216,185,106,.4); }
+.glitch{ animation:glitchAnim .4s; }
+@keyframes glitchAnim{
+  0%{ transform:translate(0);} 20%{ transform:translate(-3px,2px); filter:hue-rotate(30deg);}
+  40%{ transform:translate(3px,-2px); filter:hue-rotate(-30deg);} 60%{ transform:translate(-2px,-2px);}
+  80%{ transform:translate(2px,2px);} 100%{ transform:translate(0); filter:none;}
+}
+.envelope{ width:220px; height:150px; margin:30px auto; position:relative; }
+.envelope-back{
+  position:absolute; inset:0; background:linear-gradient(145deg,#3a3524,#20200f); border-radius:8px;
+}
+.envelope-flap{
+  position:absolute; top:0; left:0; width:100%; height:76px; background:linear-gradient(145deg,#4a4530,#2a2818);
+  clip-path:polygon(0 0,100% 0,50% 90%); transform-origin:top; transition:transform 1s ease;
+  border-radius:8px 8px 0 0;
+}
+.envelope.open .envelope-flap{ transform:rotateX(180deg); }
+.letter-paper{
+  background:linear-gradient(180deg,#f4ecd8,#efe4c8); color:#2c2410; border-radius:6px; padding:24px 20px;
+  font-family:var(--font-display); font-size:1.05rem; line-height:1.9; max-height:65vh; overflow-y:auto;
+  box-shadow:0 10px 40px rgba(0,0,0,.5); white-space:pre-line;
+}
+.signature{ font-family:var(--font-title); font-style:italic; font-size:1.3rem; text-align:right; margin-top:20px; transform:rotate(-3deg); }
+
+/* ============================================================
+   DOOR 4 — CAKE
+   ============================================================ */
+.cake-wrap{ display:flex; flex-direction:column; align-items:center; margin-top:20px; }
+.cake{ position:relative; width:180px; }
+.tier{ border-radius:10px; margin:0 auto; box-shadow:inset 0 -6px 12px rgba(0,0,0,.25), 0 6px 14px rgba(0,0,0,.4);}
+.tier1{ width:180px; height:50px; background:linear-gradient(180deg,#3a4632,#2c3624); }
+.tier2{ width:140px; height:44px; background:linear-gradient(180deg,#4d5a3c,#3a4632); margin-top:-4px;}
+.tier3{ width:100px; height:38px; background:linear-gradient(180deg,#d8b96a,#b89a4e); margin-top:-4px;}
+.candle{ width:6px; height:34px; background:var(--c-gold-soft); margin:0 auto; position:relative; margin-top:-2px; border-radius:2px;}
+.flame{
+  width:12px; height:18px; background:radial-gradient(circle,#ffe9a8,#ff9d3d 60%,transparent 80%);
+  border-radius:50% 50% 50% 50%/60% 60% 40% 40%; position:absolute; top:-16px; left:-3px;
+  animation:flicker 1s infinite alternate;
+}
+@keyframes flicker{ 0%{ transform:scale(1) rotate(-2deg);} 100%{ transform:scale(1.15) rotate(2deg);} }
+.flame.off{ animation:none; opacity:0; }
+.blow-btn{
+  margin-top:30px; padding:12px 30px; border-radius:24px; background:var(--c-emerald-bright); color:var(--c-black);
+  border:none; font-weight:600; cursor:pointer; letter-spacing:1px;
+}
+.wish-text{ font-family:var(--font-title); font-size:1.4rem; color:var(--c-gold-soft); margin-top:24px; opacity:0; text-align:center;}
+.wish-text.show{ animation:fadeIn 1.2s forwards; }
+.confetti{ position:fixed; top:-10px; width:8px; height:14px; z-index:300; pointer-events:none;}
+.balloon{ position:fixed; bottom:-60px; width:34px; height:44px; border-radius:50% 50% 50% 50%/60% 60% 40% 40%; z-index:299; pointer-events:none;}
+
+/* ============================================================
+   DOOR 5 — PUZZLE
+   ============================================================ */
+.puzzle-dots{ display:flex; gap:8px; margin-bottom:20px; }
+.pdot{ width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.15); }
+.pdot.done{ background:var(--c-emerald-bright); }
+.pdot.current{ background:var(--c-gold); }
+.puzzle-q{ font-family:var(--font-display); font-size:1.1rem; text-align:center; margin-bottom:20px; line-height:1.6;}
+.puzzle-input{
+  width:220px; text-align:center; padding:12px; border-radius:10px; background:var(--glass);
+  border:1px solid var(--glass-border); color:var(--c-white); font-family:var(--font-body);
+}
+.puzzle-feedback{ font-size:.8rem; margin-top:10px; min-height:1.2em; }
+.gift-box{ width:120px; height:120px; margin:30px auto; position:relative; }
+.gift-lid{ width:100%; height:40%; background:var(--c-gold); border-radius:8px 8px 0 0; position:absolute; top:0; transition:transform 1s ease; transform-origin:bottom;}
+.gift-box.open .gift-lid{ transform:rotateX(-120deg) translateY(-10px); }
+.gift-base{ width:100%; height:60%; background:var(--c-emerald-bright); border-radius:0 0 8px 8px; position:absolute; bottom:0; }
+.gift-light{ position:absolute; inset:0; margin:auto; width:0; height:0; border-radius:50%; background:radial-gradient(circle,#fff8dd,transparent 70%); opacity:0; }
+.gift-box.open .gift-light{ animation:giftBurst 1s ease forwards; }
+@keyframes giftBurst{ 0%{ width:0;height:0; opacity:1;} 100%{ width:260px; height:260px; opacity:0;} }
+
+/* ============================================================
+   DOOR 6 — FINAL CHAPTER
+   ============================================================ */
+.night-sky{ position:absolute; inset:0; overflow:hidden; }
+.falling-star{ position:absolute; width:2px; height:2px; background:var(--c-white); border-radius:50%; }
+.final-text{ font-family:var(--font-title); font-size:1.6rem; text-align:center; line-height:1.6; color:var(--c-gold-soft); z-index:10; }
+.final-sub{ font-family:var(--font-display); font-style:italic; font-size:1rem; opacity:.7; margin-top:14px; text-align:center; z-index:10;}
+
+/* WhatsApp-style chat */
+.wa-wrap{ position:fixed; inset:0; max-width:430px; margin:0 auto; background:#0b141a; z-index:400; display:none; flex-direction:column; }
+.wa-wrap.show{ display:flex; }
+.wa-header{ background:#1f2c34; padding:14px 16px; display:flex; align-items:center; gap:12px; }
+.wa-avatar{ width:36px; height:36px; border-radius:50%; background:var(--c-emerald-bright); display:flex; align-items:center; justify-content:center; font-weight:600; }
+.wa-name{ font-size:.95rem; color:#fff; }
+.wa-status{ font-size:.7rem; color:#8696a0; }
+.wa-messages{ flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:8px; background:#0b141a; }
+.wa-bubble{ max-width:75%; padding:8px 10px; border-radius:8px; font-size:.88rem; line-height:1.4; }
+.wa-bubble.them{ background:#1f2c34; color:#e9edef; align-self:flex-start; border-top-left-radius:0; }
+.wa-bubble.me{ background:#005c4b; color:#e9edef; align-self:flex-end; border-top-right-radius:0; }
+.wa-time{ font-size:.62rem; opacity:.5; margin-top:3px; text-align:right; }
+.wa-inputbar{ display:flex; gap:8px; padding:10px; background:#1f2c34; }
+.wa-inputbar input{ flex:1; border:none; border-radius:20px; padding:10px 14px; background:#2a3942; color:#fff; font-size:.85rem; }
+.wa-send{ width:40px; height:40px; border-radius:50%; background:#00a884; border:none; color:#fff; cursor:pointer; }
+.wa-export{ margin:8px auto; background:none; border:1px solid var(--c-gold); color:var(--c-gold-soft); font-size:.7rem; padding:6px 14px; border-radius:16px;}
+
+/* misc */
+.icon-emoji{ font-size:1.6rem; }
+::-webkit-scrollbar{ width:0; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     CONFIG — EDIT EVERYTHING HERE
+     ============================================================ -->
+<script>
+const CONFIG = {
+  recipientName: "Muhammad Laythul Habibbi",
+  greetingName: "Layth",
+  pin: "11012005", // secret letter PIN
+  themeColors: {
+    black: "#0a0b0a", olive: "#2c3122", emerald: "#0f3d33",
+    emeraldBright: "#1f8f6f", gold: "#d8b96a", white: "#f5f3ec"
+  },
+  openingSubtitle: "Every mystery has an ending.\nToday, you're about to discover mine.",
+  bgMusicSrc: "audio/background-music.mp3",      // ganti dengan file musik kamu
+  voiceMessageSrc: "audio/voice-message.mp3",     // ganti dengan file voice note kamu
+  voiceMessageDuration: "2:00",
+
+  photos: [
+    { img:"https://placehold.co/500x500/2c3122/d8b96a?text=Photo+1", title:"The First Time We Met", date:"12 Jan 2023", location:"Jakarta", story:"Ganti cerita ini dengan kisah aslimu tentang foto ini. Ceritakan detail kecil yang membuat momen ini berarti buatmu." },
+    { img:"https://placehold.co/500x500/2c3122/d8b96a?text=Photo+2", title:"That Rainy Afternoon", date:"03 Mar 2023", location:"Bandung", story:"Ganti dengan cerita panjangmu di sini." },
+    { img:"https://placehold.co/500x500/2c3122/d8b96a?text=Photo+3", title:"Our First Trip", date:"20 May 2023", location:"Yogyakarta", story:"Ganti dengan cerita panjangmu di sini." },
+    { img:"https://placehold.co/500x500/2c3122/d8b96a?text=Photo+4", title:"Late Night Talks", date:"14 Jun 2023", location:"Semarang", story:"Ganti dengan cerita panjangmu di sini." },
+    { img:"https://placehold.co/500x500/2c3122/d8b96a?text=Photo+5", title:"Coffee & Silence", date:"02 Jul 2023", location:"Solo", story:"Ganti dengan cerita panjangmu di sini." },
+    { img:"https://placehold.co/500x500/2c3122/d8b96a?text=Photo+6", title:"The Sunset We Watched", date:"19 Aug 2023", location:"Kudus", story:"Ganti dengan cerita panjangmu di sini." },
+    { img:"https://placehold.co/500x500/2c3122/d8b96a?text=Photo+7", title:"A Silly Argument", date:"05 Sep 2023", location:"Pekalongan", story:"Ganti dengan cerita panjangmu di sini." },
+    { img:"https://placehold.co/500x500/2c3122/d8b96a?text=Photo+8", title:"Celebrating Small Wins", date:"22 Sep 2023", location:"Jakarta", story:"Ganti dengan cerita panjangmu di sini." },
+    { img:"https://placehold.co/500x500/2c3122/d8b96a?text=Photo+9", title:"Rainy Night Walk", date:"10 Oct 2023", location:"Bandung", story:"Ganti dengan cerita panjangmu di sini." },
+    { img:"https://placehold.co/500x500/2c3122/d8b96a?text=Photo+10", title:"Our Favorite Song", date:"01 Nov 2023", location:"Yogyakarta", story:"Ganti dengan cerita panjangmu di sini." },
+    { img:"https://placehold.co/500x500/2c3122/d8b96a?text=Photo+11", title:"A Quiet Morning", date:"18 Dec 2023", location:"Semarang", story:"Ganti dengan cerita panjangmu di sini." },
+    { img:"https://placehold.co/500x500/2c3122/d8b96a?text=Photo+12", title:"Here We Are Now", date:"18 Jul 2026", location:"Kedungwuni", story:"Ganti dengan cerita panjangmu di sini." }
+  ],
+
+  letterContent: `My dearest Layth,
+
+Ganti seluruh isi surat ini dengan tulisan aslimu. Buat sepanjang yang kamu mau — semakin panjang, semakin terasa personal. Bagian ini didesain untuk menampung teks yang sangat panjang dengan scroll yang nyaman.
+
+Ceritakan awal mula kalian mengenal satu sama lain. Ceritakan momen-momen kecil yang selama ini kamu simpan tapi belum pernah kamu ucapkan. Tuliskan rasa syukurmu, harapanmu, dan hal-hal yang ingin kamu katakan tepat di hari ulang tahunnya.
+
+Kamu bisa menuliskan beberapa paragraf, membaginya menjadi bab-bab kecil, atau bahkan menambahkan puisi milikmu sendiri di sini.
+
+Teruskan menulis... teruskan mengenang... teruskan mencintai.
+
+Dengan segenap hati,`,
+  signature: "— Yours, always",
+
+  puzzles: [
+    { q: "Ganti dengan pertanyaan/teka-teki 1", a: "jawaban1" },
+    { q: "Ganti dengan pertanyaan/teka-teki 2", a: "jawaban2" },
+    { q: "Ganti dengan pertanyaan/teka-teki 3", a: "jawaban3" },
+    { q: "Ganti dengan pertanyaan/teka-teki 4", a: "jawaban4" },
+    { q: "Ganti dengan pertanyaan/teka-teki 5", a: "jawaban5" }
+  ],
+  puzzleReward: "You've unlocked another piece of my heart.",
+
+  finalText: "Every story has an ending...\nBut I hope ours doesn't.",
+  waFirstMessage: "Hai... makasih ya udah mau buka semua pintu ini sampai akhir. Ini pesan terakhir dariku hari ini — tapi bukan yang terakhir selamanya. Balas dong 🤍",
+
+  // Nomor WhatsApp tujuan (format internasional, tanpa + atau spasi).
+  // 081326458251 -> awalan 0 diganti kode negara Indonesia 62
+  recipientPhone: "6281326458251"
+};
+</script>
+
+<div id="app">
+  <canvas id="stars-canvas"></canvas>
+  <div class="mouse-glow" id="mouseGlow"></div>
+
+  <!-- TOP NAV -->
+  <div id="topbar">
+    <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+    <button class="nav-btn" onclick="goHome()">Home</button>
+    <button class="nav-btn" onclick="goBack()">Back</button>
+    <button class="nav-btn" id="musicBtn" onclick="toggleMusic()">🎵</button>
+  </div>
+
+  <!-- ===================== OPENING ===================== -->
+  <section class="screen active" id="screen-opening">
+    <div class="clock-digital" id="liveClock">00:00:00</div>
+    <div class="date-today" id="liveDate">-</div>
+    <button class="open-btn" onclick="handleOpen()">OPEN</button>
+  </section>
+
+  <!-- ===================== LOADING ===================== -->
+  <section class="screen" id="screen-loading">
+    <div class="loading-text" id="loadingText">opening the door…</div>
+    <div class="load-bar-wrap"><div class="load-bar" id="loadBar"></div></div>
+  </section>
+
+  <!-- ===================== WELCOME (Halaman 1) ===================== -->
+  <section class="screen" id="screen-welcome">
+    <div class="typing-block">
+      <div class="typing-line" id="typeLine">&nbsp;</div>
+    </div>
+    <button class="cta-btn" id="startJourneyBtn" style="opacity:0" onclick="rippleThen(this,goDoors)">Start Journey</button>
+  </section>
+
+  <!-- ===================== DOORS (Halaman 2) ===================== -->
+  <section class="screen" id="screen-doors">
+    <div class="doors-title">Choose a door to open</div>
+    <div class="doors-grid" id="doorsGrid"></div>
+  </section>
+
+  <!-- ===================== DOOR 1: GALLERY ===================== -->
+  <section class="screen" id="screen-door1">
+    <div class="subpage">
+      <div class="subpage-title">Gallery Memories</div>
+      <div class="subpage-sub">Every picture, a piece of us</div>
+      <div class="board" id="galleryBoard"></div>
+    </div>
+  </section>
+  <div class="gallery-full" id="galleryFull">
+    <button class="back-btn" onclick="closeGalleryFull()">← Back</button>
+    <img id="gfImg" src="" alt="">
+    <h3 id="gfTitle"></h3>
+    <div class="meta" id="gfMeta"></div>
+    <div class="story" id="gfStory"></div>
+  </div>
+
+  <!-- ===================== DOOR 2: VOICE MESSAGE ===================== -->
+  <section class="screen" id="screen-door2">
+    <div class="subpage">
+      <div class="subpage-title">Voice Message</div>
+      <div class="subpage-sub">Some things are easier said out loud</div>
+      <div class="cassette">
+        <div class="reel" id="reelL"></div>
+        <div class="reel" id="reelR"></div>
+      </div>
+      <button class="play-btn" onclick="toggleVoice()" id="voicePlayBtn">▶</button>
+      <div class="waveform" id="waveform"></div>
+      <div style="font-size:.7rem;opacity:.5;margin-top:8px;" id="voiceDuration">0:00 / -</div>
+      <audio id="voiceAudio" src=""></audio>
+    </div>
+  </section>
+
+  <!-- ===================== DOOR 3: SECRET LETTER ===================== -->
+  <section class="screen" id="screen-door3">
+    <div class="subpage">
+      <div class="subpage-title" id="pinScreenTitle">Enter Secret Code</div>
+      <div class="pin-vault" id="pinVaultWrap">
+        <div style="font-size:2rem;">🔒</div>
+        <input type="password" inputmode="numeric" maxlength="10" class="pin-input" id="pinInput" placeholder="••••••••">
+        <button class="cta-btn" onclick="checkPin()">Unlock</button>
+      </div>
+      <div class="envelope" id="envelope" style="display:none;">
+        <div class="envelope-back"></div>
+        <div class="envelope-flap"></div>
+      </div>
+      <div id="letterWrap" style="display:none; width:100%;">
+        <div class="letter-paper" id="letterPaper"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== DOOR 4: CAKE ===================== -->
+  <section class="screen" id="screen-door4">
+    <div class="subpage">
+      <div class="subpage-title">Make A Wish</div>
+      <div class="cake-wrap">
+        <div class="cake">
+          <div class="candle"><div class="flame" id="flame"></div></div>
+          <div class="tier tier3"></div>
+          <div class="tier tier2"></div>
+          <div class="tier tier1"></div>
+        </div>
+        <button class="blow-btn" id="blowBtn" onclick="blowCandle()">Blow Candle</button>
+        <div class="wish-text" id="wishText">Make a wish.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== DOOR 5: PUZZLE ===================== -->
+  <section class="screen" id="screen-door5">
+    <div class="subpage">
+      <div class="subpage-title">Secret Puzzle</div>
+      <div class="puzzle-dots" id="puzzleDots"></div>
+      <div class="puzzle-q" id="puzzleQ"></div>
+      <input class="puzzle-input" id="puzzleInput" placeholder="Ketik jawabanmu...">
+      <button class="cta-btn" style="margin-top:16px;" onclick="checkPuzzle()">Submit</button>
+      <div class="puzzle-feedback" id="puzzleFeedback"></div>
+      <div class="gift-box" id="giftBox" style="display:none;">
+        <div class="gift-light"></div>
+        <div class="gift-lid"></div>
+        <div class="gift-base"></div>
+      </div>
+      <div class="wish-text" id="giftText" style="display:none;"></div>
+    </div>
+  </section>
+
+  <!-- ===================== DOOR 6: FINAL CHAPTER ===================== -->
+  <section class="screen" id="screen-door6">
+    <div class="night-sky" id="nightSky"></div>
+    <div class="final-text" id="finalTextEl"></div>
+    <button class="cta-btn" id="replyBtn" style="margin-top:30px; opacity:0;" onclick="openWA()">Reply Me</button>
+  </section>
+
+  <!-- WHATSAPP SIMULATION -->
+  <div class="wa-wrap" id="waWrap">
+    <div class="wa-header">
+      <button class="nav-btn" onclick="closeWA()">←</button>
+      <div class="wa-avatar">L</div>
+      <div>
+        <div class="wa-name" id="waName">Muhammad Laythul Habibbi</div>
+        <div class="wa-status">online</div>
+      </div>
+    </div>
+    <div class="wa-messages" id="waMessages"></div>
+    <button class="wa-export" onclick="exportChat()">Export Chat</button>
+    <div style="text-align:center; font-size:.65rem; color:#8696a0; padding-bottom:4px;">Tap send untuk mengirim langsung ke WhatsApp asli</div>
+    <div class="wa-inputbar">
+      <input type="text" id="waInput" placeholder="Ketik pesan..." onkeydown="if(event.key==='Enter')sendWA()">
+      <button class="wa-send" onclick="sendWA()">➤</button>
+    </div>
+  </div>
+
+  <audio id="bgMusic" loop src=""></audio>
+</div>
+
+<script>
+/* ============================================================
+   STATE
+   ============================================================ */
+let currentScreen = 'screen-opening';
+let history_stack = ['screen-opening'];
+let musicOn = true;
+let voicePlaying = false;
+let puzzleIndex = 0;
+let doorsTotal = 6;
+let doorsProgress = { door1:false, door2:false, door3:false, door4:false, door5:false, door6:false };
+
+/* ============================================================
+   INIT AUDIO SRC FROM CONFIG
+   ============================================================ */
+document.getElementById('bgMusic').src = CONFIG.bgMusicSrc;
+document.getElementById('voiceAudio').src = CONFIG.voiceMessageSrc;
+document.getElementById('voiceDuration').textContent = "0:00 / " + CONFIG.voiceMessageDuration;
+
+/* ============================================================
+   CLOCK
+   ============================================================ */
+function updateClock(){
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const s = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('liveClock').textContent = `${h}:${m}:${s}`;
+  const opts = { day:'numeric', month:'long', year:'numeric' };
+  document.getElementById('liveDate').textContent = now.toLocaleDateString('id-ID', opts);
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+/* ============================================================
+   STARFIELD CANVAS
+   ============================================================ */
+const canvas = document.getElementById('stars-canvas');
+const ctx = canvas.getContext('2d');
+function resizeCanvas(){
+  canvas.width = document.getElementById('app').offsetWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+let stars = [];
+for(let i=0;i<70;i++){
+  stars.push({x:Math.random()*canvas.width, y:Math.random()*canvas.height, r:Math.random()*1.4+0.3, a:Math.random(), speed:Math.random()*0.015+0.003});
+}
+function drawStars(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  stars.forEach(st=>{
+    st.a += st.speed;
+    const op = (Math.sin(st.a)+1)/2;
+    ctx.beginPath();
+    ctx.arc(st.x, st.y, st.r, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(232,216,171,${op*0.8})`;
+    ctx.fill();
+  });
+  requestAnimationFrame(drawStars);
+}
+drawStars();
+
+/* mouse glow */
+const glow = document.getElementById('mouseGlow');
+document.addEventListener('mousemove', e=>{
+  glow.style.left = e.clientX+'px';
+  glow.style.top = e.clientY+'px';
+});
+document.addEventListener('touchmove', e=>{
+  const t = e.touches[0];
+  glow.style.left = t.clientX+'px';
+  glow.style.top = t.clientY+'px';
+},{passive:true});
+
+/* ============================================================
+   SCREEN NAVIGATION
+   ============================================================ */
+function showScreen(id, push=true){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  currentScreen = id;
+  if(push) history_stack.push(id);
+  updateTopbar(id);
+  updateProgress(id);
+}
+function updateTopbar(id){
+  const bar = document.getElementById('topbar');
+  bar.classList.toggle('show', id !== 'screen-opening' && id !== 'screen-loading');
+}
+function updateProgress(id){
+  const order = ['screen-welcome','screen-doors','screen-door1','screen-door2','screen-door3','screen-door4','screen-door5','screen-door6'];
+  const idx = order.indexOf(id);
+  const pct = idx<0 ? 0 : Math.round(((idx+1)/order.length)*100);
+  document.getElementById('progressBar').style.width = pct+'%';
+}
+function goHome(){ showScreen('screen-doors'); }
+function goBack(){
+  history_stack.pop();
+  const prev = history_stack[history_stack.length-1] || 'screen-doors';
+  showScreen(prev, false);
+}
+function goDoors(){ showScreen('screen-doors'); }
+
+/* ============================================================
+   MUSIC
+   ============================================================ */
+const bgMusic = document.getElementById('bgMusic');
+function toggleMusic(){
+  musicOn = !musicOn;
+  document.getElementById('musicBtn').textContent = musicOn ? '🎵' : '🔇';
+  if(musicOn){ bgMusic.play().catch(()=>{}); } else { bgMusic.pause(); }
+}
+
+/* ============================================================
+   OPENING -> LOADING -> WELCOME
+   ============================================================ */
+function handleOpen(){
+  showScreen('screen-loading');
+  const messages = ["opening the door…","gathering the stars…","almost there…"];
+  let mi = 0;
+  document.getElementById('loadingText').textContent = messages[0];
+  const textInterval = setInterval(()=>{
+    mi++;
+    if(mi < messages.length) document.getElementById('loadingText').textContent = messages[mi];
+  }, 1000);
+  let pct = 0;
+  const bar = document.getElementById('loadBar');
+  const barInterval = setInterval(()=>{
+    pct += 4;
+    bar.style.width = Math.min(pct,100)+'%';
+    if(pct>=100){
+      clearInterval(barInterval);
+      clearInterval(textInterval);
+      bgMusic.play().catch(()=>{});
+      setTimeout(()=>{ showScreen('screen-welcome'); startTyping(); }, 200);
+    }
+  }, 120);
+}
+
+/* ============================================================
+   TYPING ANIMATION — WELCOME PAGE
+   ============================================================ */
+function startTyping(){
+  const el = document.getElementById('typeLine');
+  const seq = [
+    { text: `Hello, ${CONFIG.greetingName}...`, cls:'typing-line' },
+    { text: `Happy Birthday`, cls:'title-gold' },
+    { text: `Welcome to your mystery journey.`, cls:'subtext-italic' }
+  ];
+  let si = 0;
+  function typeNext(){
+    if(si >= seq.length){
+      document.getElementById('startJourneyBtn').style.opacity = 1;
+      document.getElementById('startJourneyBtn').style.transition = 'opacity 1s';
+      return;
+    }
+    const item = seq[si];
+    el.className = item.cls;
+    el.textContent = '';
+    let ci = 0;
+    const type = setInterval(()=>{
+      el.textContent += item.text[ci];
+      ci++;
+      if(ci>=item.text.length){
+        clearInterval(type);
+        setTimeout(()=>{ si++; typeNext(); }, 900);
+      }
+    }, 55);
+  }
+  typeNext();
+}
+
+function rippleThen(btn, fn){
+  const r = document.createElement('span');
+  r.className='ripple';
+  const rect = btn.getBoundingClientRect();
+  r.style.left = (rect.width/2-10)+'px';
+  r.style.top = (rect.height/2-10)+'px';
+  r.style.width = r.style.height = '20px';
+  btn.appendChild(r);
+  setTimeout(()=>r.remove(),600);
+  setTimeout(fn, 150);
+}
+
+/* ============================================================
+   DOORS
+   ============================================================ */
+const doorIcons = {
+  door1: `<svg viewBox="0 0 24 24" class="door-icon" fill="none" stroke="var(--c-gold-soft)" stroke-width="1.4"><rect x="3" y="4" width="18" height="14" rx="1"/><circle cx="8" cy="10" r="2"/><path d="M3 16l5-4 4 3 5-5 4 6"/></svg>`,
+  door2: `<svg viewBox="0 0 24 24" class="door-icon" fill="none" stroke="var(--c-gold-soft)" stroke-width="1.4"><rect x="2" y="7" width="20" height="10" rx="2"/><circle cx="8" cy="12" r="2.4"/><circle cx="16" cy="12" r="2.4"/></svg>`,
+  door3: `<svg viewBox="0 0 24 24" class="door-icon" fill="none" stroke="var(--c-gold-soft)" stroke-width="1.4"><path d="M3 6h18v12H3z"/><path d="M3 6l9 7 9-7"/></svg>`,
+  door4: `<svg viewBox="0 0 24 24" class="door-icon" fill="none" stroke="var(--c-gold-soft)" stroke-width="1.4"><path d="M4 20h16v-6H4z"/><path d="M4 14h16l-2-4H6z"/><path d="M12 10V6"/><path d="M12 6c1 0 1-2 0-3s-1 2 0 3z"/></svg>`,
+  door5: `<svg viewBox="0 0 24 24" class="door-icon" fill="none" stroke="var(--c-gold-soft)" stroke-width="1.4"><circle cx="9" cy="9" r="5"/><path d="M12.5 12.5L20 20"/><path d="M17 17l3 3"/></svg>`,
+  door6: `<svg viewBox="0 0 24 24" class="door-icon" fill="none" stroke="var(--c-gold-soft)" stroke-width="1.4"><path d="M12 2l2.5 6.5L21 9l-5 4 1.8 6.5L12 16l-5.8 3.5L8 13 3 9l6.5-.5z"/></svg>`
+};
+const doorLabels = { door1:"Gallery Memories", door2:"Voice Message", door3:"Secret Letter", door4:"Birthday Cake", door5:"Secret Puzzle", door6:"Final Chapter" };
+const doorsGrid = document.getElementById('doorsGrid');
+Object.keys(doorLabels).forEach((key,i)=>{
+  const div = document.createElement('div');
+  div.className='door glass';
+  div.innerHTML = doorIcons[key] + `<div class="door-label">${doorLabels[key]}</div>`;
+  div.onclick = ()=>openDoor(key, div);
+  doorsGrid.appendChild(div);
+});
+function openDoor(key, el){
+  el.classList.add('opening');
+  setTimeout(()=>{
+    showScreen('screen-'+key);
+    el.classList.remove('opening');
+    if(key==='door1') initGallery();
+    if(key==='door6') initFinal();
+  }, 650);
+}
+
+/* ============================================================
+   DOOR 1 — GALLERY
+   ============================================================ */
+let galleryInit = false;
+function initGallery(){
+  if(galleryInit) return;
+  galleryInit = true;
+  const board = document.getElementById('galleryBoard');
+  CONFIG.photos.forEach((p, idx)=>{
+    const div = document.createElement('div');
+    div.className='polaroid';
+    div.innerHTML = `<img src="${p.img}" alt="${p.title}"><div class="polaroid-cap">${p.title}</div>`;
+    div.onclick = ()=>openPhoto(idx);
+    board.appendChild(div);
+  });
+}
+function openPhoto(idx){
+  const p = CONFIG.photos[idx];
+  document.getElementById('gfImg').src = p.img;
+  document.getElementById('gfTitle').textContent = p.title;
+  document.getElementById('gfMeta').textContent = `${p.date} · ${p.location}`;
+  document.getElementById('gfStory').textContent = p.story;
+  document.getElementById('galleryFull').classList.add('show');
+}
+function closeGalleryFull(){ document.getElementById('galleryFull').classList.remove('show'); }
+
+/* ============================================================
+   DOOR 2 — VOICE MESSAGE
+   ============================================================ */
+const waveform = document.getElementById('waveform');
+for(let i=0;i<20;i++){
+  const bar = document.createElement('div');
+  bar.className='wave-bar';
+  waveform.appendChild(bar);
+}
+const voiceAudio = document.getElementById('voiceAudio');
+let waveInterval;
+function toggleVoice(){
+  voicePlaying = !voicePlaying;
+  document.getElementById('voicePlayBtn').textContent = voicePlaying ? '❚❚' : '▶';
+  document.getElementById('reelL').classList.toggle('spin', voicePlaying);
+  document.getElementById('reelR').classList.toggle('spin', voicePlaying);
+  if(voicePlaying){
+    bgMusic.pause();
+    voiceAudio.play().catch(()=>{});
+    waveInterval = setInterval(()=>{
+      document.querySelectorAll('.wave-bar').forEach(b=>{
+        b.style.height = (Math.random()*40+6)+'px';
+      });
+    }, 150);
+  } else {
+    voiceAudio.pause();
+    clearInterval(waveInterval);
+  }
+}
+voiceAudio.addEventListener('ended', ()=>{
+  voicePlaying = false;
+  document.getElementById('voicePlayBtn').textContent = '▶';
+  document.getElementById('reelL').classList.remove('spin');
+  document.getElementById('reelR').classList.remove('spin');
+  clearInterval(waveInterval);
+  if(musicOn) bgMusic.play().catch(()=>{});
+});
+
+/* ============================================================
+   DOOR 3 — SECRET LETTER
+   ============================================================ */
+function checkPin(){
+  const input = document.getElementById('pinInput');
+  if(input.value === CONFIG.pin){
+    document.getElementById('pinScreenTitle').style.display='none';
+    document.getElementById('pinVaultWrap').style.display='none';
+    const env = document.getElementById('envelope');
+    env.style.display='block';
+    setTimeout(()=>{
+      env.classList.add('open');
+      setTimeout(()=>{
+        env.style.display='none';
+        const wrap = document.getElementById('letterWrap');
+        wrap.style.display='block';
+        document.getElementById('letterPaper').textContent = '';
+        typeLetter();
+      }, 1100);
+    }, 300);
+  } else {
+    document.getElementById('pinVaultWrap').classList.add('glitch');
+    setTimeout(()=>document.getElementById('pinVaultWrap').classList.remove('glitch'), 400);
+  }
+}
+function typeLetter(){
+  const full = CONFIG.letterContent + "\n\n" + CONFIG.signature;
+  const el = document.getElementById('letterPaper');
+  let i = 0;
+  const speed = 12; // fast typing for long letters
+  const timer = setInterval(()=>{
+    el.textContent += full[i];
+    i++;
+    el.scrollTop = el.scrollHeight;
+    if(i>=full.length) clearInterval(timer);
+  }, speed);
+}
+
+/* ============================================================
+   DOOR 4 — CAKE
+   ============================================================ */
+function blowCandle(){
+  document.getElementById('flame').classList.add('off');
+  document.getElementById('blowBtn').style.display='none';
+  document.getElementById('wishText').classList.add('show');
+  launchConfetti();
+  launchBalloons();
+}
+function launchConfetti(){
+  const colors = ['#d8b96a','#1f8f6f','#f5f3ec','#8a7a3c'];
+  for(let i=0;i<40;i++){
+    const c = document.createElement('div');
+    c.className='confetti';
+    c.style.left = Math.random()*100+'%';
+    c.style.background = colors[Math.floor(Math.random()*colors.length)];
+    c.style.transform = `rotate(${Math.random()*360}deg)`;
+    document.body.appendChild(c);
+    const duration = 2+Math.random()*2;
+    c.animate([
+      { transform:`translateY(0) rotate(0deg)`, opacity:1 },
+      { transform:`translateY(${window.innerHeight+50}px) rotate(720deg)`, opacity:0.8 }
+    ], { duration: duration*1000, easing:'ease-in' });
+    setTimeout(()=>c.remove(), duration*1000);
+  }
+}
+function launchBalloons(){
+  const colors = ['#1f8f6f','#d8b96a','#2c3122'];
+  for(let i=0;i<8;i++){
+    const b = document.createElement('div');
+    b.className='balloon';
+    b.style.left = (10+Math.random()*80)+'%';
+    b.style.background = colors[Math.floor(Math.random()*colors.length)];
+    document.body.appendChild(b);
+    const duration = 4+Math.random()*2;
+    b.animate([
+      { transform:'translateY(0)', opacity:1 },
+      { transform:`translateY(-${window.innerHeight+150}px)`, opacity:0.9 }
+    ], { duration: duration*1000, easing:'ease-out' });
+    setTimeout(()=>b.remove(), duration*1000);
+  }
+}
+
+/* ============================================================
+   DOOR 5 — PUZZLE
+   ============================================================ */
+const dotsWrap = document.getElementById('puzzleDots');
+CONFIG.puzzles.forEach((_,i)=>{
+  const d = document.createElement('div');
+  d.className='pdot'+(i===0?' current':'');
+  dotsWrap.appendChild(d);
+});
+function renderPuzzle(){
+  document.getElementById('puzzleQ').textContent = CONFIG.puzzles[puzzleIndex].q;
+  document.getElementById('puzzleInput').value='';
+  document.getElementById('puzzleFeedback').textContent='';
+}
+renderPuzzle();
+function checkPuzzle(){
+  const val = document.getElementById('puzzleInput').value.trim().toLowerCase();
+  const correct = CONFIG.puzzles[puzzleIndex].a.toLowerCase();
+  const fb = document.getElementById('puzzleFeedback');
+  if(val === correct){
+    fb.style.color = 'var(--c-emerald-bright)';
+    fb.textContent = 'Correct ✓';
+    const dots = document.querySelectorAll('.pdot');
+    dots[puzzleIndex].classList.remove('current');
+    dots[puzzleIndex].classList.add('done');
+    puzzleIndex++;
+    if(puzzleIndex < CONFIG.puzzles.length){
+      dots[puzzleIndex].classList.add('current');
+      setTimeout(renderPuzzle, 700);
+    } else {
+      setTimeout(showGift, 700);
+    }
+  } else {
+    fb.style.color = '#d87878';
+    fb.textContent = 'Try again...';
+  }
+}
+function showGift(){
+  document.getElementById('puzzleQ').style.display='none';
+  document.getElementById('puzzleInput').style.display='none';
+  document.querySelector('#screen-door5 .cta-btn').style.display='none';
+  document.getElementById('puzzleFeedback').style.display='none';
+  const box = document.getElementById('giftBox');
+  box.style.display='block';
+  setTimeout(()=>{
+    box.classList.add('open');
+    const gt = document.getElementById('giftText');
+    gt.style.display='block';
+    gt.textContent = CONFIG.puzzleReward;
+    gt.classList.add('show');
+  }, 400);
+}
+
+/* ============================================================
+   DOOR 6 — FINAL CHAPTER
+   ============================================================ */
+let finalInit = false;
+function initFinal(){
+  if(finalInit) return;
+  finalInit = true;
+  const sky = document.getElementById('nightSky');
+  for(let i=0;i<25;i++){
+    const s = document.createElement('div');
+    s.className='falling-star';
+    s.style.left = Math.random()*100+'%';
+    s.style.top = Math.random()*40+'%';
+    s.style.animation = `fallStar ${4+Math.random()*4}s linear ${Math.random()*4}s infinite`;
+    sky.appendChild(s);
+  }
+  const styleTag = document.createElement('style');
+  styleTag.textContent = `@keyframes fallStar{ 0%{ transform:translate(0,0); opacity:1;} 100%{ transform:translate(120px,220px); opacity:0;} }`;
+  document.head.appendChild(styleTag);
+
+  const el = document.getElementById('finalTextEl');
+  el.textContent = CONFIG.finalText;
+  el.style.opacity = 0;
+  el.style.transition = 'opacity 2.5s ease';
+  setTimeout(()=>{ el.style.opacity=1; }, 300);
+  setTimeout(()=>{
+    document.getElementById('replyBtn').style.opacity=1;
+    document.getElementById('replyBtn').style.transition='opacity 1.5s';
+  }, 2600);
+}
+
+/* ============================================================
+   WHATSAPP SIMULATION
+   ============================================================ */
+const WA_KEY = 'birthday_wa_chat_v1';
+function loadChat(){
+  const raw = localStorage.getItem(WA_KEY);
+  if(raw) return JSON.parse(raw);
+  return [{ from:'them', text: CONFIG.waFirstMessage, time: nowTime() }];
+}
+function saveChat(chat){ localStorage.setItem(WA_KEY, JSON.stringify(chat)); }
+function nowTime(){
+  const d = new Date();
+  return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+}
+function renderChat(){
+  const chat = loadChat();
+  const wrap = document.getElementById('waMessages');
+  wrap.innerHTML='';
+  chat.forEach(m=>{
+    const b = document.createElement('div');
+    b.className = 'wa-bubble ' + (m.from==='me' ? 'me':'them');
+    b.innerHTML = m.text + `<div class="wa-time">${m.time}</div>`;
+    wrap.appendChild(b);
+  });
+  wrap.scrollTop = wrap.scrollHeight;
+}
+function openWA(){
+  document.getElementById('waName').textContent = CONFIG.recipientName;
+  renderChat();
+  document.getElementById('waWrap').classList.add('show');
+}
+function closeWA(){ document.getElementById('waWrap').classList.remove('show'); }
+function sendWA(){
+  const input = document.getElementById('waInput');
+  const val = input.value.trim();
+  if(!val) return;
+  const chat = loadChat();
+  chat.push({ from:'me', text:escapeHtml(val), time: nowTime() });
+  saveChat(chat);
+  input.value='';
+  renderChat();
+  // Buka WhatsApp asli dengan nomor tujuan & pesan sudah terisi otomatis
+  openRealWhatsApp(val);
+}
+function openRealWhatsApp(message){
+  const url = `https://wa.me/${CONFIG.recipientPhone}?text=${encodeURIComponent(message)}`;
+  window.open(url, '_blank');
+}
+function escapeHtml(str){
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function exportChat(){
+  const chat = loadChat();
+  const lines = chat.map(m => `[${m.time}] ${m.from==='me'?'You':CONFIG.recipientName}: ${m.text.replace(/<[^>]*>/g,'')}`);
+  const blob = new Blob([lines.join('\n')], { type:'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'chat_export.txt';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
